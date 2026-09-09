@@ -1,0 +1,29 @@
+{
+  "name": "job-market-analytics-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Intelligent Job Search, Recommendation and Recruitment Analytics Platform",
+  "scripts": {
+    "setup": "npm install && npm run install:all && npm run setup:env && npm run db:up && npm run migrate && npm run seed",
+    "setup:env": "node scripts/copy-env.mjs",
+    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "migrate": "npm --prefix backend run migrate",
+    "migrate:deploy": "npm --prefix backend run migrate:deploy",
+    "generate": "npm --prefix backend run generate",
+    "seed": "npm --prefix backend run seed",
+    "seed:analytics": "npm --prefix backend run seed:analytics",
+    "dev": "concurrently -n BACKEND,FRONTEND -c blue,green \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\"",
+    "start:all": "bash scripts/start-all.sh",
+    "start:all:windows": "scripts\\start-all.bat",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "typecheck": "npm --prefix backend run typecheck && npm --prefix frontend run typecheck",
+    "test": "npm --prefix backend test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

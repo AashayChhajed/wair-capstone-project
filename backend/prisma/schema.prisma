@@ -1,0 +1,241 @@
+// Prisma schema — Intelligent Job Search, Recommendation and Recruitment
+// Analytics Platform (PostgreSQL)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  JOB_SEEKER
+  RECRUITER
+  ADMIN
+}
+
+enum JobStatus {
+  ACTIVE
+  CLOSED
+  DRAFT
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+}
+
+enum ApplicationStatus {
+  APPLIED
+  UNDER_REVIEW
+  SHORTLISTED
+  INTERVIEW
+  REJECTED
+  HIRED
+}
+
+enum EventType {
+  // Page / session events
+  PAGE_VIEW
+  SESSION_START
+  SESSION_END
+
+  // Search events
+  SEARCH
+  FILTER_USED
+
+  // Job interaction events
+  JOB_VIEW
+  JOB_SAVE
+  JOB_UNSAVE
+
+  // Application funnel events
+  APPLY_START
+  APPLICATION_SUBMITTED
+
+  // Recommendation events
+  RECOMMENDATION_IMPRESSION
+  RECOMMENDATION_CLICK
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(JOB_SEEKER)
+  createdAt    DateTime @default(now())
+
+  // A/B experiment (personalized-ranking): null = not yet assigned.
+  abVariant    String?
+  abAssignedAt DateTime?
+
+  profile       UserProfile?
+  skills        UserSkill[]
+  applications  Application[]
+  savedJobs     SavedJob[]
+  events        AnalyticsEvent[]
+  sessions      Session[]
+  companies     Company[]
+
+  @@index([role])
+  @@index([createdAt])
+  @@index([abVariant])
+}
+
+model UserProfile {
+  id                String  @id @default(cuid())
+  userId            String  @unique
+  location          String?
+  experience        Int?    // years of experience
+  preferredRole     String?
+  preferredLocation String?
+  bio               String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([preferredLocation])
+}
+
+model Skill {
+  id   String @id @default(cuid())
+  name String @unique
+
+  users     UserSkill[]
+  jobs      JobSkill[]
+}
+
+model UserSkill {
+  userId      String
+  skillId     String
+  assignedAt  DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([userId, skillId])
+  @@index([skillId])
+}
+
+model Company {
+  id          String  @id @default(cuid())
+  recruiterId String
+  name        String
+  description String?
+  location    String?
+  website     String?
+  createdAt   DateTime @default(now())
+
+  recruiter User  @relation(fields: [ recruiterId], references: [id], onDelete: Cascade)
+  jobs      Job[]
+
+  @@index([name])
+}
+
+model Job {
+  id                String         @id @default(cuid())
+  companyId         String
+  title             String
+  description       String
+  location          String
+  experienceRequired Int            @default(0)
+  salaryMin         Int?
+  salaryMax         Int?
+  employmentType    EmploymentType @default(FULL_TIME)
+  status            JobStatus      @default(ACTIVE)
+  postedAt          DateTime       @default(now())
+  applicationDeadline DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  skills       JobSkill[]
+  applications Application[]
+  savedBy      SavedJob[]
+  events       AnalyticsEvent[]
+
+  @@index([status, postedAt])
+  @@index([location])
+  @@index([title])
+  @@index([companyId])
+}
+
+model JobSkill {
+  jobId   String
+  skillId String
+
+  job   Job   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([jobId, skillId])
+  @@index([skillId])
+}
+
+model Application {
+  id        String            @id @default(cuid())
+  userId    String
+  jobId     String
+  status    ApplicationStatus @default(APPLIED)
+  coverLetter String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([jobId])
+  @@index([status])
+  @@index([userId])
+}
+
+model SavedJob {
+  userId    String
+  jobId     String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@id([userId, jobId])
+  @@index([jobId])
+}
+
+model AnalyticsEvent {
+  id          String     @id @default(cuid())
+  userId      String?
+  sessionId   String?
+  eventType   EventType
+  jobId       String?
+  searchQuery String?
+  metadata    Json?
+  timestamp   DateTime   @default(now())
+
+  user    User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  job     Job?  @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  session Session? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  @@index([eventType])
+  @@index([eventType, timestamp])
+  @@index([userId])
+  @@index([jobId])
+  @@index([timestamp])
+  @@index([searchQuery])
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  userId    String
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events AnalyticsEvent[]
+
+  @@index([userId])
+  @@index([startedAt])
+}
