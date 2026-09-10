@@ -209,7 +209,7 @@ export default function JobsPage() {
               </div>
               <div className="job-title">{hit.job.title}</div>
               <div className="muted small">
-                {hit.job.company.name} · {hit.job.location}
+                {hit.job.companyName} · {hit.job.location}
               </div>
               <div className="job-meta">
                 <span>{EMPLOYMENT_LABEL[hit.job.employmentType] ?? hit.job.employmentType}</span>
@@ -219,9 +219,9 @@ export default function JobsPage() {
                 <span>{timeAgo(hit.job.postedAt)}</span>
               </div>
               <div className="tags">
-                {hit.job.skills.slice(0, 5).map((s) => (
-                  <span key={s.id} className={`tag ${hit.matchedTerms.includes(s.name.toLowerCase().replace(/[^a-z0-9+#.]/g, "")) ? "" : "tag-out"}`}>
-                    {s.name}
+                {hit.job.skills.slice(0, 5).map((skill) => (
+                  <span key={skill} className={`tag ${hit.matchedTerms.includes(skill.toLowerCase().replace(/[^a-z0-9+#.]/g, "")) ? "" : "tag-out"}`}>
+                    {skill}
                   </span>
                 ))}
               </div>

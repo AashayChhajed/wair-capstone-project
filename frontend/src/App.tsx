@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Component, useEffect } from "react";
 import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth";
 import { endSession, getSessionId, trackPageView } from "./tracking";
@@ -18,6 +18,37 @@ import SearchEvaluationPage from "./pages/SearchEvaluationPage";
 import SearchIntelligencePage from "./pages/SearchIntelligencePage";
 import AbTestPage from "./pages/AbTestPage";
 import HomePage from "./pages/HomePage";
+
+interface ErrorBoundaryState {
+  error: Error | null;
+}
+
+class AppErrorBoundary extends Component<{ children: JSX.Element }, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { error: null };
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { error };
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="app">
+          <main className="main">
+            <div className="card form-error">
+              <h2>This page could not be displayed</h2>
+              <p>{this.state.error.message}</p>
+              <button className="btn btn-primary" onClick={() => window.location.reload()}>
+                Reload page
+              </button>
+            </div>
+          </main>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function RequireRole({ roles, children }: { roles: string[]; children: JSX.Element }) {
   const { user, loading } = useAuth();
@@ -239,8 +270,10 @@ function Shell() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Shell />
-    </AuthProvider>
+    <AppErrorBoundary>
+      <AuthProvider>
+        <Shell />
+      </AuthProvider>
+    </AppErrorBoundary>
   );
 }

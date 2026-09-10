@@ -42,10 +42,25 @@ export interface Job {
 
 export interface SearchHit {
   rank: number;
-  job: Job;
+  job: SearchJob;
   score: number;
   algorithm: "tfidf" | "bm25";
   matchedTerms: string[];
+}
+
+/** Lightweight job shape returned by the IR search index. */
+export interface SearchJob {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  experienceRequired: number;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  employmentType: string;
+  postedAt: string;
+  companyName: string;
+  skills: string[];
 }
 
 /** Phase 2: controlled query expansion result (dictionary-based). */
@@ -106,7 +121,7 @@ export interface ExplainResponse {
   termStats: TermStat[];
   results: {
     rank: number;
-    job: Job;
+    job: SearchJob;
     score: number;
     algorithm: string;
     matchedTerms: string[];
@@ -215,7 +230,7 @@ export interface ABTestResult {
 }
 
 export interface Recommendation {
-  job: Job;
+  job: RecommendationJob;
   matchPercent: number;
   skillPercent: number;
   rolePercent: number;
@@ -229,4 +244,18 @@ export interface Recommendation {
     experienceMatch: { jobRequires: number; candidateYears: number; score: number; reason: string };
     reasons: string[];
   };
+}
+
+/** Lightweight job shape returned by the recommendation service. */
+export interface RecommendationJob {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  experienceRequired: number;
+  companyName: string;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  employmentType: string;
+  skills: string[];
 }

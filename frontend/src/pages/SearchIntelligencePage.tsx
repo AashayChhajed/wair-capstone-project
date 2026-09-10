@@ -254,7 +254,7 @@ export default function SearchIntelligencePage() {
                     <span className="badge badge-primary">#{r.rank}</span>{" "}
                     <strong>{r.job.title}</strong>{" "}
                     <span className="muted small">
-                      — {r.job.company.name}, {r.job.location}
+                      — {r.job.companyName}, {r.job.location}
                     </span>
                   </div>
                   <div className="row">

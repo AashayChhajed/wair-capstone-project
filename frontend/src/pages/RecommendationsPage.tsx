@@ -63,7 +63,7 @@ export default function RecommendationsPage() {
               {r.job.title}
             </Link>
             <div className="muted small">
-              {r.job.company.name} · {r.job.location} · {formatSalary(r.job.salaryMin, r.job.salaryMax)}
+              {r.job.companyName} · {r.job.location} · {formatSalary(r.job.salaryMin, r.job.salaryMax)}
             </div>
 
             <div className="score-bar">
