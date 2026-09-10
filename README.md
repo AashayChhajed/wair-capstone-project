@@ -134,17 +134,49 @@ hard-coded.
 
 The fastest path (full setup guide: **[SETUP_GUIDE.md](SETUP_GUIDE.md)**):
 
+> **Windows:** run all commands from `E:\wair-capstone` (the folder containing this README), not
+> from `scripts`. Make sure Docker Desktop is running before starting the database.
+
 ```bash
 # 1. Install everything + create .env files + start Postgres + migrate + seed
 npm run setup
 
-# 2. Start backend (:4000) and frontend (:5173) together in one terminal
+# 2. Start everything (recommended on Windows; starts DB and seeds an empty DB):
+npm run start:all:windows
+
+#    Or start only the backend and frontend after setup:
 npm run dev
-#    — or use the all-in-one launcher (starts DB too, seeds an empty DB):
-bash scripts/start-all.sh        # Windows: double-click scripts/start-all.bat
 ```
 
 Then open **http://localhost:5173** and sign in with a demo account.
+
+### Stop the project
+
+Use the same terminal that is running the servers and press **Ctrl+C**, then run this from the
+project root in a second PowerShell terminal:
+
+```powershell
+npm run db:down
+```
+
+This stops the backend, frontend, and PostgreSQL container while preserving database data. If
+`Ctrl+C` does not stop the Node child processes on Windows, run this PowerShell cleanup command:
+
+```powershell
+Get-NetTCPConnection -LocalPort 4000,5173 -State Listen -ErrorAction SilentlyContinue |
+  Select-Object -ExpandProperty OwningProcess -Unique |
+  Stop-Process -Force -ErrorAction SilentlyContinue
+npm run db:down
+```
+
+To stop Docker Desktop completely after the project is down, use the Docker Desktop tray menu or:
+
+```powershell
+docker desktop stop
+```
+
+Do **not** use `docker compose down -v` for normal shutdown. The `-v` option permanently deletes
+the PostgreSQL data volume.
 
 ### Demo accounts (password for all: `Password123!`)
 

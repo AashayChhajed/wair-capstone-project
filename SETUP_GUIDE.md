@@ -18,6 +18,9 @@ frontend — with no manual configuration and minimal terminal juggling.
 > 💡 **Windows users:** use **Git Bash** (not cmd/PowerShell) for the commands below, or use the
 > provided `scripts/start-all.bat`. PowerShell/cmd also work for plain `npm run …` commands.
 
+> **Important:** run commands from the project root (`E:\wair-capstone`), the folder containing
+> `package.json` and this guide. Do not run `npm run setup` from the `scripts` folder.
+
 ## 2. What Runs Where
 
 | Service | Port | URL |
@@ -45,13 +48,49 @@ Then start **everything together** with one command:
 
 ```bash
 # Option A — all-in-one launcher (starts DB too, seeds an empty DB automatically):
-bash scripts/start-all.sh          # Windows: double-click scripts/start-all.bat
+bash scripts/start-all.sh
 
 # Option B — just the two servers (DB must already be up from `npm run setup`):
 npm run dev
 ```
 
+On Windows, the simplest option is to run this from PowerShell or Command Prompt:
+
+```powershell
+npm run start:all:windows
+```
+
 Open **http://localhost:5173** and log in with a demo account (section 5).
+
+## Stop everything
+
+When finished, press **Ctrl+C** in the terminal running the application. Then, from the project
+root, stop PostgreSQL:
+
+```powershell
+npm run db:down
+```
+
+If Windows leaves the backend or frontend running after **Ctrl+C**, clean up the project ports with
+PowerShell and then stop the database:
+
+```powershell
+Get-NetTCPConnection -LocalPort 4000,5173 -State Listen -ErrorAction SilentlyContinue |
+	Select-Object -ExpandProperty OwningProcess -Unique |
+	Stop-Process -Force -ErrorAction SilentlyContinue
+npm run db:down
+```
+
+Verify shutdown if needed:
+
+```powershell
+Get-NetTCPConnection -LocalPort 4000,5173 -State Listen -ErrorAction SilentlyContinue
+docker compose ps
+```
+
+The first command should return no listeners and `docker compose ps` should show no running
+services. Database data is preserved by `npm run db:down`. Only use `docker compose down -v` when
+you intentionally want to delete the database volume and start from an empty database.
 
 ## 4. Manual Setup (step by step, if you prefer)
 
@@ -114,6 +153,7 @@ Admin demo routes: `/admin` (dashboard), `/admin/search-evaluation` (IR metrics)
 |------|---------|
 | Install everything + setup + seed | `npm run setup` |
 | Start all services (DB + backend + frontend) | `bash scripts/start-all.sh` |
+| Start all services on Windows | `npm run start:all:windows` |
 | Start backend + frontend only | `npm run dev` |
 | Start backend only | `npm run dev:backend` |
 | Start frontend only | `npm run dev:frontend` |
@@ -121,7 +161,8 @@ Admin demo routes: `/admin` (dashboard), `/admin/search-evaluation` (IR metrics)
 | Run backend tests | `npm test` (root) or `npm --prefix backend test` |
 | Typecheck everything | `npm run typecheck` |
 | Production build | `npm run build` |
-| Stop PostgreSQL | `npm run db:down` |
+| Stop PostgreSQL after stopping the app | `npm run db:down` |
+| Stop Docker Desktop completely | `docker desktop stop` |
 
 ## 7. Troubleshooting
 
@@ -132,6 +173,7 @@ Admin demo routes: `/admin` (dashboard), `/admin/search-evaluation` (IR metrics)
 | `EADDRINUSE` on port 4000 or 5173 | Another instance is already running. Stop it, or change `PORT` in `backend/.env` / `server.port` in `frontend/vite.config.ts`. |
 | `bash: scripts/start-all.sh: No such file or directory` | Run the script from the **project root** (`bash scripts/start-all.sh`), or use `npm run start:all`. |
 | `bash.exe not found` (Windows) | Install Git for Windows, or fall back to: `npm run setup` then `npm run dev`. |
+| `Ctrl+C` does not stop the app on Windows | Run the PowerShell cleanup command in section 4.6, then run `npm run db:down`. |
 | Backend logs `P1001` / can't reach database | Check `DATABASE_URL` in `backend/.env` matches `postgresql://postgres:postgres@localhost:5433/job_platform`. |
 | Login fails with "Invalid email or password" | Use the demo accounts above with password `Password123!`, or register a new account. |
 | Empty dashboards | Run `npm run seed` once — all analytics are computed from stored events, so empty DB = empty charts. |
